@@ -1,0 +1,100 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>My Music Library</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="search-bar">
+    <ion-item>
+      <ion-input placeholder="Search Spotify..." [(ngModel)]="searchQuery"></ion-input>
+      <ion-button expand="block" (click)="onSearch()">Search</ion-button>
+    </ion-item>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Local Music List -->
+  <ion-list>
+    <ion-item-divider>
+      <ion-label class="divider-label">Local Music</ion-label>
+    </ion-item-divider>
+    
+    <ion-item>
+      <ion-button expand="block" (click)="pickAndPlayLocalFile()">
+        Pick and Play Local File
+      </ion-button>
+    </ion-item>
+
+    <ion-item 
+      *ngFor="let track of localTracks" 
+      (click)="playLocalTrack(track)" 
+      [class.active-track]="track === currentTrack"
+    >
+      <ion-thumbnail slot="start">
+        <img [src]="track.albumArt || 'assets/local-placeholder.png'" />
+      </ion-thumbnail>
+      <ion-label>
+        <h3>{{ track.title }}</h3>
+        <p>{{ track.artist }}</p>
+      </ion-label>
+
+      <ion-button fill="clear" slot="end" (click)="playLocalTrack(track); $event.stopPropagation()">
+        <ion-icon 
+          [name]="track === currentTrack && isPlaying ? 'pause-circle' : 'play-circle'" 
+          size="large" 
+          [color]="track === currentTrack && isPlaying ? 'success' : 'primary'"
+        ></ion-icon>
+      </ion-button>
+    </ion-item>
+
+    <ion-item *ngIf="currentTrack">
+      <ion-label>
+        <h3>Now Playing: {{ nowPlayingTitle }}</h3>
+        <p>{{ nowPlayingArtist }}</p>        
+      </ion-label>
+
+      <div class="controls">
+        <ion-button fill="clear" (click)="pauseTrack()" [disabled]="!isPlaying">
+          <ion-icon name="pause"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" (click)="resumeTrack()" [disabled]="isPlaying">
+          <ion-icon name="play"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" (click)="stopTrack()">
+          <ion-icon name="stop"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-item>
+
+    <ion-item-divider color="light">
+      <ion-label class="divider-label">Spotify Music</ion-label>
+    </ion-item-divider>
+    
+    <ion-item 
+      *ngFor="let track of spotifyTracks" 
+      (click)="playSpotifyTrack(track)" 
+      [class.active-track]="track === currentTrack"
+    >
+      <ion-thumbnail slot="start">
+        <img [src]="track.album.images.length ? track.album.images[0].url : 'assets/icon/spotify.png'" />
+      </ion-thumbnail>
+      <ion-label>
+        <h3>{{ track.name }}</h3>
+        <p>{{ getSpotifyArtists(track) }}</p>
+      </ion-label>
+    
+      <ion-button fill="clear" slot="end" (click)="playSpotifyTrack(track); $event.stopPropagation()">
+        <ion-icon 
+          [name]="track === currentTrack && isPlaying ? 'pause-circle' : 'play-circle'" 
+          size="large" 
+          [color]="track === currentTrack && isPlaying ? 'success' : 'primary'"
+        ></ion-icon>
+      </ion-button>
+    </ion-item>
+    
+
+  </ion-list>
+</ion-content>

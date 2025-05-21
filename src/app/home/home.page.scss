@@ -1,0 +1,48 @@
+ion-header {
+  ion-title {
+    font-weight: bold;
+    font-size: 1.5em;
+  }
+  ion-toolbar {
+    color: #aaa9bc;
+  }
+}
+
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+ion-item-divider {
+  background-color: #8a8ab6;
+  border-radius: 8px;
+}
+
+.divider-label {
+  font-size: 1.2em;
+  color: #fcf3f3;
+}
+
+.track-item {
+  --border-radius: 12px;
+  --background: #ffffff;
+  margin-bottom: 10px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.active-track {
+  background-color: #e0f7fa !important;
+}
+
+
+ion-thumbnail img {
+  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+}
+
+ion-button {
+  --background: #aaa9bc;
+  --color: white;
+}
