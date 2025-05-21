@@ -6,6 +6,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { Media } from '@awesome-cordova-plugins/media/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
+import { HttpClientJsonpModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -15,6 +16,7 @@ import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
     HttpClientModule, // ✅ Ensure this is imported
     IonicModule.forRoot(),
     AppRoutingModule,
+    HttpClientJsonpModule,
   ],
   providers: [
     Media,

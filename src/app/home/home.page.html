@@ -7,7 +7,7 @@
 <ion-content class="ion-padding">
   <div class="search-bar">
     <ion-item>
-      <ion-input placeholder="Search Spotify..." [(ngModel)]="searchQuery"></ion-input>
+      <ion-input placeholder="Search Deezer..." [(ngModel)]="searchQuery"></ion-input>
       <ion-button expand="block" (click)="onSearch()">Search</ion-button>
     </ion-item>
   </div>
@@ -69,24 +69,25 @@
       </div>
     </ion-item>
 
+    <!-- Deezer -->
     <ion-item-divider color="light">
-      <ion-label class="divider-label">Spotify Music</ion-label>
+      <ion-label class="divider-label">Deezer Music</ion-label>
     </ion-item-divider>
     
     <ion-item 
-      *ngFor="let track of spotifyTracks" 
-      (click)="playSpotifyTrack(track)" 
+      *ngFor="let track of deezerTracks" 
+      (click)="playDeezerTrack(track)" 
       [class.active-track]="track === currentTrack"
     >
       <ion-thumbnail slot="start">
-        <img [src]="track.album.images.length ? track.album.images[0].url : 'assets/icon/spotify.png'" />
+        <img [src]="track.album.cover_medium || 'assets/icon/spotify.png'" />
       </ion-thumbnail>
       <ion-label>
-        <h3>{{ track.name }}</h3>
-        <p>{{ getSpotifyArtists(track) }}</p>
+        <h3>{{ track.title }}</h3>
+        <p>{{ track.artist.name || 'Unknown Artist' }}</p>
       </ion-label>
     
-      <ion-button fill="clear" slot="end" (click)="playSpotifyTrack(track); $event.stopPropagation()">
+      <ion-button fill="clear" slot="end" (click)="playDeezerTrack(track); $event.stopPropagation()">
         <ion-icon 
           [name]="track === currentTrack && isPlaying ? 'pause-circle' : 'play-circle'" 
           size="large" 
@@ -94,7 +95,5 @@
         ></ion-icon>
       </ion-button>
     </ion-item>
-    
-
   </ion-list>
 </ion-content>

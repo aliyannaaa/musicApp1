@@ -3,5 +3,12 @@
   "integrations": {
     "cordova": {}
   },
-  "type": "angular"
+  "type": "angular",
+
+  "proxies": [
+    {
+      "path": "/api",
+      "proxyUrl": "https://api.deezer.com"
+    }
+  ]
 }

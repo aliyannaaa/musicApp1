@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  spotifyToken: 'BQABkLRlxpORp_zdPSQfd773cu0BerH31yEOWWQxCX44IpvQeGH65FkUSNGsMrsPj_aYrl-HDIyv7-hkrQTAiJIF_3uYi_TEgqUZzfXwWy7rphs2vx7uR1CgP2B-dL_DfyYCMHDn-xIT2ZJrwbHQoUTy5DuF9oCGaRIuMrzojW1tpGNDicAXjJKnnujC-GjB1nPH7daqWs2DA9PuoXFAXjHg7JHcM1dQkGHjoBJo9Fj29fVu3FgoxyCUKy5F_cNNinlzFgqv9_It7LcgxMhqKAXqSr8MoGqqJdUkXXiq8UaAHSZV-kl8GqvbHGqfHTHwy55B',
+  deezerApiUrl: 'https://api.deezer.com'
 };
 
 /*
