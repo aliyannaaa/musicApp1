@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { DeezerService } from '../services/deezer.services';
-import { Media, MediaObject } from '@awesome-cordova-plugins/media/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
 import { HttpClient } from '@angular/common/http';
-import { HttpClientJsonpModule } from '@angular/common/http';
-
+import { Platform } from '@ionic/angular';
+import { PermissionService } from '../services/permission.service';
+import { AudioPlayerService } from '../services/audio-player.service';
 
 interface LocalTrack {
   title: string;
@@ -16,7 +16,7 @@ interface LocalTrack {
 interface DeezerTrack {
   id: number;
   title: string;
-  artist: { name: string }; // fixed: using artist object for correct name
+  artist: { name: string };
   album: { cover_medium: string };
   preview: string;
 }
@@ -31,33 +31,77 @@ export class HomePage {
   searchQuery = '';
   localTracks: LocalTrack[] = [];
   deezerTracks: DeezerTrack[] = [];
-  audioPlayer: HTMLAudioElement | null = null;
   currentTrack: LocalTrack | DeezerTrack | null = null;
   isPlaying = false;
   isCurrentTrackLocal = true;
   errorMessage = '';
-  private audioFile?: MediaObject;
   deezerPlaylistId = '908622995';
 
   constructor(
     private http: HttpClient,
     private deezerService: DeezerService,
-    private media: Media,
-    private fileChooser: FileChooser
+    private fileChooser: FileChooser,
+    private platform: Platform,
+    private permissionService: PermissionService,
+    private audioPlayer: AudioPlayerService
   ) {}
 
   async ionViewWillEnter() {
+    // Request permissions before loading any content
+    await this.permissionService.requestStoragePermission();
     this.loadLocalTracks();
     this.loadDeezerPlaylist(this.deezerPlaylistId);
   }
 
   async pickAndPlayLocalFile() {
     try {
+      // Make sure we have permission first - request it again to be sure
+      const hasPermission = await this.permissionService.requestStoragePermission();
+      if (!hasPermission) {
+        this.errorMessage = 'Storage permission denied. Please enable storage permission in app settings.';
+        return;
+      }
+      
       const uri = await this.fileChooser.open();
+      console.log('Selected file URI:', uri);
+      
+      // Set current track info with placeholder data
+      this.currentTrack = { title: 'Loading...', artist: 'Please wait', path: uri };
       this.isCurrentTrackLocal = true;
-      await this.playAudio(uri, { title: 'Picked File', artist: 'Unknown', path: uri }, true);
-    } catch (err) {
-      this.errorMessage = 'File picking failed.';
+      
+      // Clear any previous error
+      this.errorMessage = '';
+      
+      // Play the audio file
+      try {
+        await this.audioPlayer.playAudio(uri);
+        this.isPlaying = true;
+        this.currentTrack = { title: 'Picked File', artist: 'Unknown', path: uri };
+      } catch (error) {
+        console.error('Error playing audio:', error);
+        
+        let message = 'Unknown error';
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+          message = (error as any).message;
+        } else if (typeof error === 'string') {
+          message = error;
+        }
+        
+        this.errorMessage = `Failed to play audio: ${message}`;
+        this.isPlaying = false;
+        this.currentTrack = null;
+      }
+    } catch (error: any) {
+      console.error('File picking error:', error);
+      let message = 'Unknown error';
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        message = (error as any).message;
+      } else if (typeof error === 'string') {
+        message = error;
+      }
+      this.errorMessage = 'File picking failed: ' + message;
+      this.isPlaying = false;
+      this.currentTrack = null;
     }
   }
 
@@ -79,8 +123,25 @@ export class HomePage {
   }
 
   async playLocalTrack(track: LocalTrack) {
+    this.stopTrack();
+    this.currentTrack = track;
     this.isCurrentTrackLocal = true;
-    await this.playAudio(track.path, track, true);
+    
+    try {
+      await this.audioPlayer.playAudio(track.path);
+      this.isPlaying = true;
+    } catch (error) {
+      console.error('Error playing local track:', error);
+      let message = 'Unknown error';
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        message = (error as any).message;
+      } else if (typeof error === 'string') {
+        message = error;
+      }
+      this.errorMessage = `Failed to play: ${message}`;
+      this.isPlaying = false;
+      this.currentTrack = null;
+    }
   }
 
   async playDeezerTrack(track: DeezerTrack) {
@@ -88,8 +149,26 @@ export class HomePage {
       alert('Preview not available for this track.');
       return;
     }
+    
+    this.stopTrack();
+    this.currentTrack = track;
     this.isCurrentTrackLocal = false;
-    await this.playAudio(track.preview, track, false);
+    
+    try {
+      await this.audioPlayer.playAudio(track.preview);
+      this.isPlaying = true;
+    } catch (error) {
+      console.error('Error playing Deezer track:', error);
+      let message = 'Unknown error';
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        message = (error as any).message;
+      } else if (typeof error === 'string') {
+        message = error;
+      }
+      this.errorMessage = `Failed to play: ${message}`;
+      this.isPlaying = false;
+      this.currentTrack = null;
+    }
   }
 
   searchDeezerTracks() {
@@ -148,69 +227,19 @@ export class HomePage {
     });
   }
 
-  private async playAudio(source: string, track: LocalTrack | DeezerTrack, isLocal: boolean) {
-    this.stopTrack();
-    this.currentTrack = track;
-
-    if (isLocal) {
-      this.audioFile = this.media.create(source);
-      this.audioFile.onStatusUpdate.subscribe(status => {
-        if (status === 4) {
-          this.isPlaying = false;
-          this.currentTrack = null;
-        }
-      });
-      this.audioFile.play();
-      this.isPlaying = true;
-    } else {
-      this.audioPlayer = new Audio(source);
-      try {
-        await this.audioPlayer.play();
-        this.isPlaying = true;
-      } catch {
-        this.isPlaying = false;
-        this.currentTrack = null;
-      }
-
-      this.audioPlayer.onended = () => {
-        this.isPlaying = false;
-        this.currentTrack = null;
-      };
-
-      this.audioPlayer.onerror = () => {
-        this.isPlaying = false;
-        this.currentTrack = null;
-      };
-    }
-  }
-
   pauseTrack() {
-    if (this.isCurrentTrackLocal && this.audioFile) {
-      this.audioFile.pause();
-    } else if (!this.isCurrentTrackLocal && this.audioPlayer) {
-      this.audioPlayer.pause();
-    }
+    this.audioPlayer.pause();
     this.isPlaying = false;
   }
 
   resumeTrack() {
-    if (this.isCurrentTrackLocal && this.audioFile) {
-      this.audioFile.play();
-    } else if (!this.isCurrentTrackLocal && this.audioPlayer) {
-      this.audioPlayer.play();
-    }
+    this.audioPlayer.resume();
     this.isPlaying = true;
   }
 
   stopTrack() {
-    if (this.isCurrentTrackLocal && this.audioFile) {
-      this.audioFile.stop();
-      this.audioFile.release();
-      this.audioFile = undefined;
-    } else if (!this.isCurrentTrackLocal && this.audioPlayer) {
-      this.audioPlayer.pause();
-      this.audioPlayer.currentTime = 0;
-    }
+    this.audioPlayer.stop();
+    this.audioPlayer.release();
     this.isPlaying = false;
     this.currentTrack = null;
   }
