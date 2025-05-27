@@ -21,6 +21,12 @@ interface DeezerTrack {
   preview: string;
 }
 
+interface LocalPlaylist {
+  name: string;
+  tracks: LocalTrack[];
+  open?: boolean; // for UI toggle
+}
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
@@ -36,6 +42,8 @@ export class HomePage {
   isCurrentTrackLocal = true;
   errorMessage = '';
   deezerPlaylistId = '908622995';
+  localPlaylists: LocalPlaylist[] = [];
+  newPlaylistName = '';
 
   constructor(
     private http: HttpClient,
@@ -55,51 +63,35 @@ export class HomePage {
 
   async pickAndPlayLocalFile() {
     try {
-      // Make sure we have permission first - request it again to be sure
       const hasPermission = await this.permissionService.requestStoragePermission();
       if (!hasPermission) {
-        this.errorMessage = 'Storage permission denied. Please enable storage permission in app settings.';
+        this.errorMessage = 'Permission denied.';
         return;
       }
-      
+
       const uri = await this.fileChooser.open();
-      console.log('Selected file URI:', uri);
-      
-      // Set current track info with placeholder data
-      this.currentTrack = { title: 'Loading...', artist: 'Please wait', path: uri };
+      const fileName = uri.split('/').pop() || 'Unknown';
+      const title = fileName.replace(/\.[^/.]+$/, '');
+      const newTrack: LocalTrack = {
+        title,
+        artist: 'Unknown Artist',
+        path: uri,
+        albumArt: 'assets/icon/splash.png'
+      };
+
+      // Add to localTracks if not already present
+      if (!this.localTracks.some(t => t.path === uri)) {
+        this.localTracks.push(newTrack);
+      }
+
+      this.currentTrack = newTrack;
       this.isCurrentTrackLocal = true;
-      
-      // Clear any previous error
       this.errorMessage = '';
-      
-      // Play the audio file
-      try {
-        await this.audioPlayer.playAudio(uri);
-        this.isPlaying = true;
-        this.currentTrack = { title: 'Picked File', artist: 'Unknown', path: uri };
-      } catch (error) {
-        console.error('Error playing audio:', error);
-        
-        let message = 'Unknown error';
-        if (typeof error === 'object' && error !== null && 'message' in error) {
-          message = (error as any).message;
-        } else if (typeof error === 'string') {
-          message = error;
-        }
-        
-        this.errorMessage = `Failed to play audio: ${message}`;
-        this.isPlaying = false;
-        this.currentTrack = null;
-      }
+
+      await this.audioPlayer.playAudio(uri);
+      this.isPlaying = true;
     } catch (error: any) {
-      console.error('File picking error:', error);
-      let message = 'Unknown error';
-      if (typeof error === 'object' && error !== null && 'message' in error) {
-        message = (error as any).message;
-      } else if (typeof error === 'string') {
-        message = error;
-      }
-      this.errorMessage = 'File picking failed: ' + message;
+      this.errorMessage = 'File picking failed.';
       this.isPlaying = false;
       this.currentTrack = null;
     }
@@ -247,6 +239,39 @@ export class HomePage {
   onSearch() {
     this.errorMessage = '';
     this.searchDeezerTracks();
+  }
+
+  addLocalPlaylist() {
+    const name = this.newPlaylistName.trim();
+    if (name && !this.localPlaylists.some(p => p.name === name)) {
+      this.localPlaylists.push({ name, tracks: [], open: false });
+      this.newPlaylistName = '';
+    }
+  }
+
+  deleteLocalPlaylist(index: number) {
+    this.localPlaylists.splice(index, 1);
+  }
+
+  addTrackToPlaylist(track: LocalTrack, playlist: LocalPlaylist) {
+    if (!playlist.tracks.some(t => t.path === track.path)) {
+      playlist.tracks.push(track);
+    }
+  }
+
+  removeTrackFromPlaylist(track: LocalTrack, playlist: LocalPlaylist) {
+    playlist.tracks = playlist.tracks.filter(t => t.path !== track.path);
+  }
+
+  togglePlaylistOpen(index: number) {
+    this.localPlaylists[index].open = !this.localPlaylists[index].open;
+  }
+
+  playLocalPlaylist(playlist: LocalPlaylist) {
+    if (playlist.tracks.length > 0) {
+      this.playLocalTrack(playlist.tracks[0]);
+      // Optionally, implement queue logic for next/prev
+    }
   }
 
   get nowPlayingTitle(): string {

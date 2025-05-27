@@ -14,7 +14,17 @@ const config: CapacitorConfig = {
     android: {
       useLegacyStorage: true,
       webContentsDebuggingEnabled: true
-    }
+    },
+    "SplashScreen": {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      backgroundColor: '#ffffff',
+      androidSplashResourceName: "splash",
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true
+    },
   },
   server: {
     androidScheme: 'https'

@@ -40,7 +40,7 @@
       [class.active-track]="track === currentTrack"
     >
       <ion-thumbnail slot="start">
-        <img [src]="track.albumArt || 'assets/local-placeholder.png'" />
+        <img [src]="track.albumArt || 'assets/icon/splash.png'" />
       </ion-thumbnail>
       <ion-label>
         <h3>{{ track.title }}</h3>
@@ -54,7 +54,64 @@
           [color]="track === currentTrack && isPlaying ? 'success' : 'primary'"
         ></ion-icon>
       </ion-button>
+      <ion-button fill="clear" slot="end" (click)="addTrackToPlaylist(track, localPlaylists[0]); $event.stopPropagation()" *ngIf="localPlaylists.length">
+        <ion-icon name="add-circle"></ion-icon>
+      </ion-button>
     </ion-item>
+
+    <ion-list>
+      <ion-item-divider>
+        <ion-label class="divider-label">Local Playlists</ion-label>
+      </ion-item-divider>
+      <ion-item>
+        <ion-input placeholder="New Playlist Name" [(ngModel)]="newPlaylistName"></ion-input>
+        <ion-button (click)="addLocalPlaylist()">Add</ion-button>
+      </ion-item>
+      <ion-item *ngFor="let playlist of localPlaylists; let i = index">
+        <ion-label (click)="togglePlaylistOpen(i)">
+          <h3>{{ playlist.name }}</h3>
+          <p>{{ playlist.tracks.length }} tracks</p>
+        </ion-label>
+        <ion-button fill="clear" slot="end" color="danger" (click)="deleteLocalPlaylist(i)">
+          <ion-icon name="trash"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" slot="end" (click)="playLocalPlaylist(playlist)">
+          <ion-icon name="play"></ion-icon>
+        </ion-button>
+      </ion-item>
+      <div *ngFor="let playlist of localPlaylists; let i = index">
+        <ion-list *ngIf="playlist.open">
+          <ion-item-divider color="light">
+            <ion-label>Add Song to "{{ playlist.name }}"</ion-label>
+          </ion-item-divider>
+          <ion-item *ngFor="let track of localTracks">
+            <ion-label>
+              {{ track.title }} - {{ track.artist }}
+            </ion-label>
+            <ion-button fill="clear" slot="end" (click)="addTrackToPlaylist(track, playlist)">
+              <ion-icon name="add-circle"></ion-icon>
+            </ion-button>
+          </ion-item>
+          <ion-item-divider color="medium">
+            <ion-label>{{ playlist.name }} Tracks</ion-label>
+          </ion-item-divider>
+          <ion-item *ngFor="let track of playlist.tracks">
+            <ion-thumbnail slot="start">
+              <img [src]="track.albumArt || 'assets/icon/splash.png'" />
+            </ion-thumbnail>
+            <ion-label>
+              {{ track.title }} - {{ track.artist }}
+            </ion-label>
+            <ion-button fill="clear" slot="end" color="danger" (click)="removeTrackFromPlaylist(track, playlist)">
+              <ion-icon name="remove-circle"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" slot="end" (click)="playLocalTrack(track)">
+              <ion-icon name="play"></ion-icon>
+            </ion-button>
+          </ion-item>
+        </ion-list>
+      </div>
+    </ion-list>
 
     <ion-item *ngIf="currentTrack">
       <ion-label>
